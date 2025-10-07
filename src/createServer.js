@@ -350,7 +350,9 @@ const createServer = async () => {
       res.status(201).json(newCategory);
     } catch (error) {
       if (error.name === 'SequelizeUniqueConstraintError') {
-        return res.status(400).json({ message: 'Category name already exists' });
+        return res
+          .status(400)
+          .json({ message: 'Category name already exists' });
       }
       console.error(error);
       res.status(500).json({ message: 'Error creating category' });
@@ -409,7 +411,9 @@ const createServer = async () => {
       res.status(200).json(category);
     } catch (error) {
       if (error.name === 'SequelizeUniqueConstraintError') {
-        return res.status(400).json({ message: 'Category name already exists' });
+        return res
+          .status(400)
+          .json({ message: 'Category name already exists' });
       }
       console.error(error);
       res.status(500).json({ message: 'Error updating category' });

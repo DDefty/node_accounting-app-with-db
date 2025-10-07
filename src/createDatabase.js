@@ -15,7 +15,7 @@ const createDatabase = async () => {
     username: POSTGRES_USER || 'postgres',
     host: POSTGRES_HOST || 'localhost',
     dialect: 'postgres',
-    port: POSTGRES_PORT || 5432,
+    port: Number(POSTGRES_PORT) || 5432,
     password: POSTGRES_PASSWORD || '123',
   });
 
@@ -25,7 +25,8 @@ const createDatabase = async () => {
     // Create the accounting_app database
     await sequelize.query('CREATE DATABASE accounting_app;');
   } catch (error) {
-    if (error.message.includes('already exists')) {
+    // Check for Postgres error code 42P04 (database already exists)
+    if (error.original?.code === '42P04') {
       // Database already exists
     } else {
       console.error('Error creating database:', error.message);
