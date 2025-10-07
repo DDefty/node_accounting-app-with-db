@@ -7,6 +7,7 @@ const { sequelize } = require('./db');
 const { Op } = require('sequelize');
 const { User } = require('./models/User.model');
 const { Expense } = require('./models/Expense.model');
+const { Category } = require('./models/Category.model');
 
 const createServer = async () => {
   const app = express();
@@ -14,6 +15,7 @@ const createServer = async () => {
   // Middleware
   app.use(cors());
   app.use(express.json());
+  app.use(express.static('public'));
 
   // Test database connection
   try {
@@ -322,6 +324,117 @@ const createServer = async () => {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error updating expense' });
+    }
+  });
+
+  // Categories CRUD routes
+  app.get('/categories', async (req, res) => {
+    try {
+      const allCategories = await Category.findAll();
+      res.status(200).json(allCategories);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error fetching categories' });
+    }
+  });
+
+  app.post('/categories', async (req, res) => {
+    try {
+      const { name } = req.body;
+
+      if (typeof name !== 'string' || name.trim() === '') {
+        return res.sendStatus(400);
+      }
+
+      const newCategory = await Category.create({ name: name.trim() });
+      res.status(201).json(newCategory);
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({ message: 'Category name already exists' });
+      }
+      console.error(error);
+      res.status(500).json({ message: 'Error creating category' });
+    }
+  });
+
+  app.get('/categories/:categoryId', async (req, res) => {
+    try {
+      const id = Number(req.params.categoryId);
+
+      if (Number.isNaN(id)) {
+        return res.sendStatus(400);
+      }
+
+      const category = await Category.findByPk(id);
+
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found' });
+      }
+
+      res.status(200).json(category);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error fetching category' });
+    }
+  });
+
+  app.patch('/categories/:categoryId', async (req, res) => {
+    try {
+      const id = Number(req.params.categoryId);
+
+      if (Number.isNaN(id)) {
+        return res.sendStatus(400);
+      }
+
+      const { name } = req.body;
+
+      if (
+        name !== undefined &&
+        (typeof name !== 'string' || name.trim() === '')
+      ) {
+        return res.sendStatus(400);
+      }
+
+      const category = await Category.findByPk(id);
+
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found' });
+      }
+
+      if (name !== undefined) {
+        category.name = name.trim();
+      }
+
+      await category.save();
+      res.status(200).json(category);
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({ message: 'Category name already exists' });
+      }
+      console.error(error);
+      res.status(500).json({ message: 'Error updating category' });
+    }
+  });
+
+  app.delete('/categories/:categoryId', async (req, res) => {
+    try {
+      const id = Number(req.params.categoryId);
+
+      if (Number.isNaN(id)) {
+        return res.sendStatus(400);
+      }
+
+      const category = await Category.findByPk(id);
+
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found' });
+      }
+
+      await Category.destroy({ where: { id } });
+      res.sendStatus(204);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error deleting category' });
     }
   });
 
